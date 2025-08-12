@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>冯老师的生词复习小站 | Feng Laoshi's Vocabulary Review</title>
+    <style>
+       body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+            padding: 20px;
+        }
+        header {
+            background: #50a3a2;
+            color: white;
+            padding-top: 30px;
+            min-height: 70px;
+            border-bottom: #e8491d 3px solid;
+        }
+        header a {
+            color: #ffffff;
+            text-decoration: none;
+            text-transform: uppercase;
+            font-size: 16px;
+        }
+        header ul {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            overflow: hidden;
+        }
+        header li {
+            float: left;
+            display: inline;
+            padding: 0 20px 0 20px;
+        }
+        header #branding {
+            float: left;
+        }
+        header #branding h1 {
+            margin: 0;
+        }
+        header nav {
+            float: right;
+            margin-top: 10px;
+        }
+        .review-area, .vocabulary-management {
+            background: white;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .review-options {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .review-options button {
+            margin: 0 10px;
+            padding: 15px 30px;
+            font-size: 20px;
+            cursor: pointer;
+            background-color: #50a3a2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 180px;
+        }
+        .review-options button:hover {
+            background-color: #387c7b;
+        }
+        .review-options button span {
+            display: block;
+        }
+        .review-options button .en {
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .vocabulary-management button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #character-display {
+            font-size: 72px;
+            text-align: center;
+            margin: 20px 0;
+            min-height: 100px;
+        }
+        #meaning-display {
+            font-size: 24px;
+            text-align: center;
+            margin: 20px 0;
+            min-height: 36px;
+        }
+        #input-area {
+            text-align: center;
+            margin: 20px 0;
+        }
+        #input-area input, .vocabulary-management input {
+            font-size: 18px;
+            padding: 5px;
+            margin-right: 10px;
+        }
+        #feedback {
+            text-align: center;
+            font-size: 18px;
+            margin: 20px 0;
+            min-height: 27px;
+        }
+        #vocabulary-list {
+            margin-top: 20px;
+        }
+        #vocabulary-list li {
+            background: #f4f4f4;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 3px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        #bulk-input {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 10px;
+        }
+        .audio-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
+        }
+        #playback-speed {
+            margin: 0 10px;
+        }
+        .bilingual {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .bilingual .en {
+            font-size: 0.8em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div id="branding">
+                <h1>冯老师的生词复习小站 | Teacher Feng's Vocabulary Review</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#review">复习 | Review</a></li>
+                    <li><a href="#vocabulary">词库管理 | Vocabulary Management</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="review" class="review-area">
+            <h2 class="bilingual"><span>生词复习</span><span class="en">Vocabulary Review</span></h2>
+            <div class="review-options">
+                <button onclick="setReviewMode('音')">
+                    <span>音</span>
+                    <span class="en">by pronunciation</span>
+                </button>
+                <button onclick="setReviewMode('形')">
+                    <span>形</span>
+                    <span class="en">by shape</span>
+                </button>
+                <button onclick="setReviewMode('意')">
+                    <span>意</span>
+                    <span class="en">by meaning</span>
+                </button>
+            </div>
+            <div id="character-display"></div>
+            <div id="meaning-display"></div>
+            <div class="audio-controls">
+                <label for="playback-speed">语速 | Speed：</label>
+                <select id="playback-speed" onchange="updatePlaybackSpeed()">
+                    <option value="0.5">0.5x</option>
+                    <option value="0.75">0.75x</option>
+                    <option value="1" selected>1x</option>
+                    <option value="1.25">1.25x</option>
+                    <option value="1.5">1.5x</option>
+                </select>
+                <button onclick="replayAudio()">重新播放 | Replay</button>
+            </div>
+            <div id="input-area">
+                <input type="text" id="user-input" placeholder="请输入答案 | Enter your answer">
+                <button onclick="checkAnswer()">提交 | Submit</button>
+            </div>
+            <div id="feedback"></div>
+        </div>
+
+        <div id="vocabulary" class="vocabulary-management">
+            <h2 class="bilingual"><span>词库管理</span><span class="en">Vocabulary Management</span></h2>
+            <input type="text" id="new-char" placeholder="汉字/词语 | Chinese character/word">
+            <input type="text" id="new-pinyin" placeholder="拼音 | Pinyin">
+            <input type="text" id="new-meaning" placeholder="英文释义 | English meaning">
+            <button onclick="addVocabulary()">添加生词 | Add Word</button>
+            <button onclick="openBulkUploadModal()">批量上传 | Bulk Upload</button>
+            <ul id="vocabulary-list"></ul>
+        </div>
+    </div>
+
+    <div id="bulkUploadModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeBulkUploadModal()">&times;</span>
+            <h2 class="bilingual"><span>批量上传生词</span><span class="en">Bulk Upload Vocabulary</span></h2>
+            <textarea id="bulk-input" placeholder="例 | Example:&#10;你好&#9;nǐ hǎo&#9;hello&#10;世界&#9;shì jiè&#9;world"></textarea>
+            <button onclick="processBulkUpload()">上传 | Upload</button>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = '';
+        let currentCharacter = '';
+        let vocabulary = [
+            { char: '你好', pinyin: 'nǐ hǎo', meaning: 'hello' },
+            { char: '世界', pinyin: 'shì jiè', meaning: 'world' }
+        ];
+        let playbackSpeed = 1;
+        let utterance = null;
+
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(frequency, duration) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(1, audioContext.currentTime + 0.01);
+            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration - 0.01);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        function playCorrectSound() {
+            playSound(800, 0.15);
+            setTimeout(() => playSound(1000, 0.15), 150);
+        }
+
+        function playIncorrectSound() {
+            playSound(300, 0.3);
+        }
+
+        function setReviewMode(mode) {
+            currentMode = mode;
+            document.getElementById('feedback').textContent = `已选择${mode}的复习模式 | ${mode} review mode selected`;
+            document.querySelector('.audio-controls').style.display = mode === '音' ? 'flex' : 'none';
+            clearDisplays();
+            nextCharacter();
+            if (mode === '音') {
+                playAudio();
+            }
+        }
+
+        function clearDisplays() {
+            document.getElementById('character-display').textContent = '';
+            document.getElementById('meaning-display').textContent = '';
+        }
+
+        function nextCharacter() {
+            const charObj = vocabulary[Math.floor(Math.random() * vocabulary.length)];
+            currentCharacter = charObj.char;
+            clearDisplays();
+            switch(currentMode) {
+                case '音':
+                    document.getElementById('character-display').textContent = '?';
+                    break;
+                case '形':
+                    document.getElementById('character-display').textContent = currentCharacter;
+                    break;
+                case '意':
+                    document.getElementById('meaning-display').textContent = charObj.meaning;
+                    break;
+            }
+            document.getElementById('user-input').value = '';
+            document.getElementById('feedback').textContent = '';
+        }
+
+        function playAudio() {
+            if (utterance) {
+                speechSynthesis.cancel();
+            }
+            utterance = new SpeechSynthesisUtterance(currentCharacter);
+            utterance.lang = 'zh-CN';
+            utterance.rate = playbackSpeed;
+            speechSynthesis.speak(utterance);
+        }
+
+        function replayAudio() {
+            if (currentMode === '音' && currentCharacter) {
+                playAudio();
+            } else {
+                document.getElementById('feedback').textContent = '请先选择“音”模式 | Please select "by pronunciation" mode first';
+            }
+        }
+
+        function updatePlaybackSpeed() {
+            playbackSpeed = parseFloat(document.getElementById('playback-speed').value);
+        }
+
+        function checkAnswer() {
+            const userInput = document.getElementById('user-input').value;
+            const currentWord = vocabulary.find(word => word.char === currentCharacter);
+            let feedback = '';
+
+            if (userInput === currentCharacter) {
+                feedback = `正确！Correct!<br>${currentWord.char} (${currentWord.pinyin})<br>英文释义 | English meaning：${currentWord.meaning}`;
+                playCorrectSound();
+            } else {
+                feedback = `不正确，请再试一次。Incorrect, please try again.<br>提示 | Hint：${currentWord.pinyin}`;
+                playIncorrectSound();
+            }
+
+            document.getElementById('feedback').innerHTML = feedback;
+        }
+
+        function addVocabulary() {
+            const newChar = document.getElementById('new-char').value;
+            const newPinyin = document.getElementById('new-pinyin').value;
+            const newMeaning = document.getElementById('new-meaning').value;
+            if (newChar && newPinyin && newMeaning) {
+                vocabulary.push({ char: newChar, pinyin: newPinyin, meaning: newMeaning });
+                updateVocabularyList();
+                document.getElementById('new-char').value = '';
+                document.getElementById('new-pinyin').value = '';
+                document.getElementById('new-meaning').value = '';
+            }
+        }
+
+        function updateVocabularyList() {
+            const list = document.getElementById('vocabulary-list');
+            list.innerHTML = '';
+            vocabulary.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.textContent = `${item.char} - ${item.pinyin} - ${item.meaning}`;
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = '删除 | Delete';
+                deleteButton.onclick = () => deleteVocabulary(index);
+                li.appendChild(deleteButton);
+                list.appendChild(li);
+            });
+        }
+
+        function deleteVocabulary(index) {
+            vocabulary.splice(index, 1);
+            updateVocabularyList();
+        }
+
+        function openBulkUploadModal() {
+            document.getElementById('bulkUploadModal').style.display = 'block';
+        }
+
+        function closeBulkUploadModal() {
+            document.getElementById('bulkUploadModal').style.display = 'none';
+        }
+
+        function processBulkUpload() {
+            const bulkInput = document.getElementById('bulk-input').value;
+            const lines = bulkInput.split('\n');
+            lines.forEach(line => {
+                const [char, pinyin, meaning] = line.split('\t');
+                if (char && pinyin && meaning) {
+                    vocabulary.push({ char: char.trim(), pinyin: pinyin.trim(), meaning: meaning.trim() });
+                }
+            });
+            updateVocabularyList();
+            closeBulkUploadModal();
+        }
+    </script>
+</body>
+</html>
