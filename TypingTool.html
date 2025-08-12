@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>冯老师的打字练习生成器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        textarea {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        .options-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .options-container label {
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        .options-container select {
+            padding: 5px;
+            font-size: 14px;
+        }
+        .options-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        button.generate {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        .result textarea {
+            width: 100%;
+            font-size: 16px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        .result p {
+            font-size: 16px;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+        footer {
+            margin-top: 40px;
+            font-size: 14px;
+            text-align: center;
+        }
+        footer a {
+            color: #2196F3;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>冯老师的打字练习生成器</h1>
+    <div class="container">
+        <p>输入一列生词或句子，用回车分隔。</p>
+        <p>Enter a list of words or sentences, separated by line breaks.</p>
+        <textarea id="input-text" rows="8" placeholder=""></textarea>
+        
+        <div class="options-container">
+            <div>
+                <label for="duration">打字练习时间 / Duration：</label>
+                <select id="duration">
+                    <option value="30">30秒</option>
+                    <option value="60">1分钟</option>
+                    <option value="120">2分钟</option>
+                    <option value="300">5分钟</option>
+                    <option value="600">10分钟</option>
+                </select>
+            </div>
+            <div>
+                <input type="checkbox" id="randomize">
+                <label for="randomize">随机顺序 / Randomize</label>
+            </div>
+        </div>
+
+        <button class="generate" onclick="generateURL()">生成链接 | Generate URL</button>
+        <div class="result" id="result" hidden>
+            <p>请点击下方选中链接，复制到新的页面。</p>
+            <p>Please click the link below to select and copy it to a new page.</p>
+            <textarea id="result-text" rows="3" readonly onclick="selectText()">点击以选择链接 / Click to select URL</textarea>
+        </div>
+    </div>
+
+    <footer>
+        <p>Made With: <a href="https://10fastfingers.com/widgets/typingtest" target="_blank">10fastfingers</a> | <a href="https://chatgpt.com" target="_blank">ChatGPT</a></p>
+    </footer>
+
+    <script>
+        function generateURL() {
+            const baseUrl = "https://10fastfingers.com/widgets/ttembeddable/?dur=60&rand=1&words=";
+            const inputText = document.getElementById("input-text").value.trim();
+            const durationSelect = document.getElementById("duration").value;
+            const randomizeCheckbox = document.getElementById("randomize").checked;
+
+            if (inputText === "") {
+                alert("请输入内容 / Please enter some content.");
+                return;
+            }
+
+            // Replace newlines with "|"
+            const formattedText = inputText.replace(/\n/g, "|");
+
+            // Encode the formatted text
+            const encodedText = encodeURIComponent(formattedText);
+
+            // Determine the value of rand
+            const randValue = randomizeCheckbox ? 1 : 0;
+
+            // Replace parameters in the URL
+            const finalUrl = baseUrl.replace("rand=1", `rand=${randValue}`).replace("dur=60", `dur=${durationSelect}`) + encodedText;
+
+            // Display the result in the textarea
+            const resultDiv = document.getElementById("result");
+            const resultText = document.getElementById("result-text");
+            resultDiv.hidden = false;
+            resultText.value = finalUrl;
+        }
+
+        function selectText() {
+            const resultText = document.getElementById("result-text");
+            resultText.select();
+        }
+    </script>
+</body>
+</html>
