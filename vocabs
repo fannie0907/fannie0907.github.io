@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>三列生词训练｜音·形·义 → 输汉字</title>
+<style>
+  :root{
+    --bg:#0b0c10; --card:#15171c; --text:#e8eaed; --muted:#a6adb7; --accent:#4da3ff; --ok:#22c55e; --bad:#ef4444;
+    --btn:#22252b; --btn-hover:#2b2f36; --border:#2a2d33;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  .wrap{max-width:960px;margin:24px auto;padding:16px}
+  header{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:12px}
+  h1{font-size:18px;margin:0;font-weight:600;color:#eef2f7}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  textarea, input[type="text"]{
+    width:100%;background:#0f1114;color:var(--text);border:1px solid var(--border);border-radius:10px;
+    padding:12px 14px;outline:none;transition:.15s border;
+  }
+  textarea{min-height:110px;resize:vertical}
+  textarea:focus, input[type="text"]:focus{border-color:#3a78ff}
+  .btn{
+    appearance:none;border:1px solid var(--border);background:var(--btn);color:var(--text);
+    padding:10px 14px;border-radius:10px;cursor:pointer;transition:.15s background,border,transform;font-weight:600;
+  }
+  .btn:hover{background:var(--btn-hover)}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{border-color:#2c62ff;background:#2942ff1a}
+  .btn.good{border-color:color-mix(in oklab, var(--ok) 60%, black); color:var(--ok)}
+  .btn.bad{border-color:color-mix(in oklab, var(--bad) 60%, black); color:var(--bad)}
+  .btn.ghost{background:transparent}
+  .tag{display:inline-block;font-size:12px;color:var(--muted);padding:2px 8px;border:1px dashed var(--border);border-radius:999px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:800px){.grid{grid-template-columns:1fr}}
+  .cue{
+    margin:10px 0 6px;font-size:15px;color:var(--muted);
+  }
+  .cue strong{color:#cbd5e1}
+  .panel{
+    background:#0f1114;border:1px solid var(--border);border-radius:12px;padding:18px;min-height:68px;
+    display:flex;align-items:center;justify-content:center;font-size:20px;letter-spacing:.5px
+  }
+  .panel .mask span{
+    display:inline-block;border-bottom:3px solid #3a3f47;min-width:1.2em;height:1em;margin:0 .15em;vertical-align:baseline
+  }
+  .flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .grow{flex:1 1 auto}
+  .right{margin-left:auto}
+  .stats{display:flex;gap:12px;align-items:center;color:var(--muted);font-size:14px}
+  .stats b{color:#e2e8f0}
+  .feedback{min-height:24px;margin-top:6px;font-weight:600}
+  .feedback.ok{color:var(--ok)}
+  .feedback.bad{color:var(--bad)}
+  .small{font-size:12px;color:var(--muted)}
+  .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;background:#0c0e11;border:1px solid var(--border);
+       border-bottom-width:2px;border-radius:6px;padding:1px 6px;font-size:12px;color:#dbe2ea}
+  .pill{padding:6px 10px;border-radius:999px;border:1px solid var(--border)}
+  .spacer{height:8px}
+  .list{white-space:pre;overflow:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>三列生词训练（汉字·拼音·英文）</h1>
+    <div class="stats">
+      <span>题目 <b id="qNum">0</b></span>
+      <span>正确 <b id="okNum">0</b></span>
+      <span>错误 <b id="badNum">0</b></span>
+      <span>连对 <b id="streak">0</b></span>
+      <span class="tag">回车提交 <span class="kbd">Enter</span></span>
+    </div>
+  </header>
+
+  <!-- 数据导入 -->
+  <div class="card" id="loader">
+    <div class="row">
+      <div class="grow">
+        <div class="small">在此粘贴或编辑三列生词（逗号或制表分隔）：<br>格式：汉字,拼音,英文（每行一条）</div>
+      </div>
+      <div class="right flex">
+        <button class="btn ghost" id="loadSample">加载示例</button>
+        <button class="btn" id="saveList">保存到本机</button>
+        <button class="btn" id="clearList">清空</button>
+      </div>
+    </div>
+    <textarea id="dataArea" spellcheck="false"></textarea>
+    <div class="spacer"></div>
+    <div class="flex">
+      <button class="btn primary" id="parseBtn">导入生词</button>
+      <label class="pill small"><input type="checkbox" id="shuffleOnLoad" checked> 导入后打乱顺序</label>
+      <label class="pill small"><input type="checkbox" id="skipDup" checked> 自动去重</label>
+    </div>
+    <div class="small" style="margin-top:6px">提示：支持从表格直接粘贴。列表会保存到浏览器本地（无网也可用）。</div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- 出题区 -->
+  <div class="card" id="quiz" style="display:none">
+    <div class="row">
+      <div class="flex">
+        <button class="btn" id="btnYin"  title="根据拼音出题">音</button>
+        <button class="btn" id="btnXing" title="根据字形出题（部分遮挡）">形</button>
+        <button class="btn" id="btnYi"   title="根据英文释义出题">义</button>
+        <button class="btn ghost" id="btnWrongOnly" title="只练错题">只练错题</button>
+        <button class="btn ghost" id="btnAll" title="切回全部词库">全部词库</button>
+      </div>
+      <div class="right flex">
+        <label class="pill small"><input type="checkbox" id="autonext" checked> 答对自动下一题</label>
+        <label class="pill small"><input type="checkbox" id="maskKeepLen" checked> “形”保留字数长度</label>
+      </div>
+    </div>
+
+    <div class="cue">提示（<strong id="cueType">—</strong>）</div>
+    <div class="panel" id="cuePanel">请点击「音 / 形 / 义」开始</div>
+
+    <div class="grid" style="margin-top:12px">
+      <div>
+        <div class="small">请输入汉字答案：</div>
+        <input type="text" id="answer" placeholder="在此输入汉字…" autocomplete="off" inputmode="text">
+        <div class="feedback" id="feedback"></div>
+        <div class="flex">
+          <button class="btn primary" id="submitBtn">提交（Enter）</button>
+          <button class="btn ghost" id="skipBtn" title="跳过此题">跳过</button>
+          <button class="btn ghost" id="revealBtn" title="显示答案">看答案</button>
+        </div>
+      </div>
+      <div>
+        <div class="small">本题完整信息：</div>
+        <div class="panel" id="revealPanel" style="justify-content:flex-start;gap:18px;flex-wrap:wrap">
+          <span class="tag" id="rvHanzi">汉字：—</span>
+          <span class="tag" id="rvPinyin">拼音：—</span>
+          <span class="tag" id="rvEnglish">英文：—</span>
+        </div>
+        <div class="small" style="margin-top:6px">快捷键：<span class="kbd">1</span> 音，<span class="kbd">2</span> 形，<span class="kbd">3</span> 义；<span class="kbd">Enter</span> 提交；<span class="kbd">Space</span> 下一题</div>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="small">当前词库（<span id="poolSize">0</span> 条）：</div>
+    <div class="card list" id="wordList" style="background:#0f1114"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+
+  // --- 状态 ---
+  let items = [];            // 全部词条
+  let wrongSet = new Set();  // 错题索引
+  let useWrongOnly = false;  // 只练错题
+  let poolIdx = [];          // 当前可抽取的索引池
+  let current = null;        // {i, item, cue}
+  let stats = {q:0, ok:0, bad:0, streak:0};
+
+  // --- 工具函数 ---
+  const trim = s => (s||'').replace(/\s+/g,' ').trim();
+  const isCJK = s => /[\u3400-\u9fff]/.test(s);
+  const sampleData =
+`你好, nǐ hǎo, hello
+谢谢, xiè xie, thanks
+老师, lǎo shī, teacher
+同学, tóng xué, classmate
+汉语, hàn yǔ, Chinese (language)
+苹果, píng guǒ, apple
+电脑, diàn nǎo, computer
+篮球, lán qiú, basketball
+天气, tiān qì, weather
+作业, zuò yè, homework`;
+
+  function saveLocal(){
+    localStorage.setItem('sv_data', $('#dataArea').value);
+  }
+  function loadLocal(){
+    const s = localStorage.getItem('sv_data');
+    if(s) $('#dataArea').value = s;
+  }
+
+  function parseData(text, {dedup=true}={}){
+    const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+    const out = [];
+    const seen = new Set();
+    for(const line of lines){
+      // 支持逗号或制表符分列
+      const cols = line.split(/[\t,]/).map(c=>trim(c));
+      if(cols.length < 3) continue;
+      const [hanzi, pinyin, english] = cols;
+      if(!isCJK(hanzi)) continue;
+      const key = hanzi + '|' + pinyin + '|' + english.toLowerCase();
+      if(dedup && seen.has(key)) continue;
+      seen.add(key);
+      out.push({hanzi, pinyin, english});
+    }
+    return out;
+  }
+
+  function shuffle(arr){
+    for(let i=arr.length-1; i>0; i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function refreshPool(){
+    poolIdx = items.map((_,i)=>i);
+    $('#poolSize').textContent = poolIdx.length;
+    renderList();
+  }
+
+  function maskHanzi(hz, keepLen=true){
+    // 遮挡约一半字符，保留其余；如果只有1个字，50%概率显示空格占位
+    const arr = hz.split('');
+    const n = arr.length;
+    const target = Math.max(1, Math.floor(n/2));
+    const idxs = shuffle([...arr.keys()]).slice(0,target);
+    const out = arr.map((ch,i)=> idxs.includes(i) ? '□' : ch);
+    if(keepLen){
+      // 用 span 占位，显示为下划线长度
+      return `<span class="mask">${out.map(ch=>{
+        return ch==='□'?'<span></span>':(`<span style="border-color:#7b7f87;width:${Math.max(1, ch.charCodeAt(0)>255?1.1:0.8)}em"></span>`)
+      }).join('')}</span>`;
+    }else{
+      return out.join('');
+    }
+  }
+
+  function pickOne(cue){
+    const pool = useWrongOnly ? [...wrongSet].map(Number) : poolIdx;
+    if(pool.length===0){
+      $('#cuePanel').innerHTML = '词库为空或（仅错题模式下）没有错题。';
+      return (current=null);
+    }
+    const i = pool[Math.floor(Math.random()*pool.length)];
+    const item = items[i];
+    current = {i, item, cue}; // cue: '音'|'形'|'义'
+    $('#cueType').textContent = cue;
+    let content = '';
+    if(cue==='音') content = item.pinyin;
+    else if(cue==='义') content = item.english;
+    else content = maskHanzi(item.hanzi, $('#maskKeepLen').checked);
+    $('#cuePanel').innerHTML = content;
+    // 清理输入与反馈
+    $('#answer').value = '';
+    $('#feedback').textContent = '';
+    updateReveal({show:false});
+    $('#answer').focus();
+  }
+
+  function updateReveal({show=false}={}){
+    const p = current?.item;
+    $('#rvHanzi').textContent = '汉字：' + (show && p ? p.hanzi : '—');
+    $('#rvPinyin').textContent = '拼音：' + (show && p ? p.pinyin : '—');
+    $('#rvEnglish').textContent = '英文：' + (show && p ? p.english : '—');
+  }
+
+  function updateStats(kind){
+    stats.q++;
+    if(kind==='ok'){ stats.ok++; stats.streak++; }
+    if(kind==='bad'){ stats.bad++; stats.streak=0; }
+    $('#qNum').textContent = stats.q;
+    $('#okNum').textContent = stats.ok;
+    $('#badNum').textContent = stats.bad;
+    $('#streak').textContent = stats.streak;
+  }
+
+  function submit(){
+    if(!current) return;
+    const ans = trim($('#answer').value);
+    const truth = current.item.hanzi;
+    if(!ans){ $('#feedback').className='feedback bad'; $('#feedback').textContent='请先输入汉字～'; return; }
+    if(ans === truth){
+      $('#feedback').className='feedback ok';
+      $('#feedback').textContent='✅ 正确！';
+      wrongSet.delete(current.i);
+      updateStats('ok');
+      updateReveal({show:true});
+      if($('#autonext').checked){
+        setTimeout(()=>nextSameCue(), 650);
+      }
+    }else{
+      $('#feedback').className='feedback bad';
+      $('#feedback').textContent=`❌ 不对。正确答案：${truth}`;
+      wrongSet.add(current.i);
+      updateStats('bad');
+      updateReveal({show:true});
+    }
+  }
+
+  function nextSameCue(){
+    if(!current) return;
+    pickOne(current.cue);
+  }
+
+  function renderList(){
+    const pool = items;
+    $('#wordList').textContent = pool.map((o,idx)=>{
+      const wrong = wrongSet.has(idx) ? ' *' : '';
+      return `${idx+1}. ${o.hanzi}    ${o.pinyin}    ${o.english}${wrong}`;
+    }).join('\n');
+  }
+
+  // --- 事件绑定 ---
+  $('#loadSample').onclick = ()=> { $('#dataArea').value = sampleData; };
+  $('#saveList').onclick = ()=> { saveLocal(); alert('已保存到本机浏览器。'); };
+  $('#clearList').onclick = ()=> { $('#dataArea').value=''; saveLocal(); };
+
+  $('#parseBtn').onclick = ()=>{
+    const text = $('#dataArea').value;
+    const dedup = $('#skipDup').checked;
+    const arr = parseData(text, {dedup});
+    if(arr.length===0){ alert('未解析到有效的三列数据（汉字, 拼音, 英文）。'); return; }
+    items = $('#shuffleOnLoad').checked ? shuffle(arr) : arr;
+    wrongSet.clear(); useWrongOnly=false;
+    $('#quiz').style.display='block';
+    refreshPool();
+    pickOne('音'); // 默认从“音”开始
+    saveLocal();
+  };
+
+  $('#btnYin').onclick  = ()=> pickOne('音');
+  $('#btnXing').onclick = ()=> pickOne('形');
+  $('#btnYi').onclick   = ()=> pickOne('义');
+
+  $('#btnWrongOnly').onclick = ()=>{ useWrongOnly = true; pickOne(current?.cue || '音'); };
+  $('#btnAll').onclick = ()=>{ useWrongOnly = false; pickOne(current?.cue || '音'); };
+
+  $('#submitBtn').onclick = submit;
+  $('#skipBtn').onclick = nextSameCue;
+  $('#revealBtn').onclick = ()=> updateReveal({show:true});
+
+  $('#answer').addEventListener('keydown', (e)=>{
+    if(e.key==='Enter'){ e.preventDefault(); submit(); }
+  });
+
+  document.addEventListener('keydown', (e)=>{
+    if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName) && e.key!==' ' && !/^[123]$/.test(e.key)) return;
+    if(e.key==='1') pickOne('音');
+    if(e.key==='2') pickOne('形');
+    if(e.key==='3') pickOne('义');
+    if(e.key===' ') { e.preventDefault(); nextSameCue(); }
+  });
+
+  // 初始：恢复上次数据
+  loadLocal();
+  if($('#dataArea').value.trim()){
+    // 自动解析但不出题，等你点导入；如果想自动导入，可在此调用 parse
+  }
+})();
+</script>
+</body>
+</html>
